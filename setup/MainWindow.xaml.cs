@@ -1815,7 +1815,7 @@ In that event here are some steps you can try to resolve this:
 			}
 		}
 
-		void InstallDlss5()
+		void InstallDlss5(DlssGpuMode mode)
 		{
 			if (currentInfo.targetPath == null || !File.Exists(currentInfo.targetPath))
 			{
@@ -1828,7 +1828,9 @@ In that event here are some steps you can try to resolve this:
 			string downloadDirectory = Path.Combine(Path.GetTempPath(), "reshade-dlss5-" + Guid.NewGuid().ToString("N"));
 			Directory.CreateDirectory(downloadDirectory);
 			string streamlineArchive = DownloadDlss5Asset(downloadDirectory, "DLSS310.8.0-Streamline2.13.zip", "3FDB7CB25250259332550F419DBAC516A2EBA778D8592DA75CB2FE8ABFC781D8");
-			string neuralArchive = DownloadDlss5Asset(downloadDirectory, "nvngx_dlssnr_2026_10_16.zip", "764F94A32EC302B9FE4DA9A1246FD7DD9176E490D8766667687C9FD89DA2AB12");
+			string neuralAsset = mode == DlssGpuMode.Rtx50
+				? DownloadDlss5Asset(downloadDirectory, "nvngx_dlssnr_2026_10_16.zip", "764F94A32EC302B9FE4DA9A1246FD7DD9176E490D8766667687C9FD89DA2AB12")
+				: DownloadDlss5Asset(downloadDirectory, "nvngx_dlssnr_compat-fp16-310.9.16-cuda13.4.3.dll", "CDFA6C1EC784867182164C7836F324F087B5C9F374D0C9FE46F54999FEABF3ED");
 			string renodxAddon = DownloadDlss5Asset(downloadDirectory, "renodx-dlss.addon64", "A8FD34B531FD22C3DBD008ED8FD3CBFCCA2FB451729E19CD1FC2E4C85B5068D4");
 			string backupDirectory = Path.Combine(targetDirectory, ".reshade-dlss5-backup", DateTime.Now.ToString("yyyyMMdd-HHmmss", CultureInfo.InvariantCulture));
 			Directory.CreateDirectory(backupDirectory);
@@ -1858,12 +1860,16 @@ In that event here are some steps you can try to resolve this:
 					try { entry.ExtractToFile(temporary, true); CopyEntry(temporary, destination); } finally { if (File.Exists(temporary)) File.Delete(temporary); }
 				}
 			}
-			using (var archive = ZipFile.OpenRead(neuralArchive))
+			if (mode == DlssGpuMode.Rtx50)
 			{
-				var entry = archive.GetEntry("nvngx_dlssnr.dll") ?? throw new InvalidDataException("nvngx_dlssnr.dll is missing from the neural rendering archive.");
-				string temporary = Path.Combine(Path.GetTempPath(), "reshade-dlss5-nr-" + Guid.NewGuid().ToString("N") + ".dll");
-				try { entry.ExtractToFile(temporary, true); CopyEntry(temporary, Path.Combine(targetDirectory, "nvngx_dlssnr.dll")); } finally { if (File.Exists(temporary)) File.Delete(temporary); }
+				using (var archive = ZipFile.OpenRead(neuralAsset))
+				{
+					var entry = archive.GetEntry("nvngx_dlssnr.dll") ?? throw new InvalidDataException("nvngx_dlssnr.dll is missing from the neural rendering archive.");
+					string temporary = Path.Combine(Path.GetTempPath(), "reshade-dlss5-nr-" + Guid.NewGuid().ToString("N") + ".dll");
+					try { entry.ExtractToFile(temporary, true); CopyEntry(temporary, Path.Combine(targetDirectory, "nvngx_dlssnr.dll")); } finally { if (File.Exists(temporary)) File.Delete(temporary); }
+				}
 			}
+			else CopyEntry(neuralAsset, Path.Combine(targetDirectory, "nvngx_dlssnr.dll"));
 			CopyEntry(renodxAddon, Path.Combine(targetDirectory, "renodx-dlss.addon64"));
 			UpdateStatusAndFinish(true, "Successfully installed DLSS 5, Streamline and RenoDX. A backup was created in .reshade-dlss5-backup.");
 			try { Directory.Delete(downloadDirectory, true); } catch { }
@@ -2038,9 +2044,10 @@ In that event here are some steps you can try to resolve this:
 		}
 		void OnDlss5ButtonClick(object sender, RoutedEventArgs e)
 		{
-			if (SelectDlssGpuMode() == null) return;
+			var mode = SelectDlssGpuMode();
+			if (mode == null) return;
 			Dlss5Button.IsEnabled = false;
-			RunTaskWithExceptionHandling(InstallDlss5);
+			RunTaskWithExceptionHandling(() => InstallDlss5(mode.Value));
 		}
 
 		void OnSkipButtonClick(object sender, RoutedEventArgs e)
