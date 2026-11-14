@@ -15,10 +15,12 @@ using System.Reflection;
 using System.Security.AccessControl;
 using System.Security.Cryptography;
 using System.Security.Principal;
+using System.Management;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Media;
+using System.Windows.Controls;
 using System.Windows.Navigation;
 using Microsoft.Win32;
 using ReShade.Setup.Pages;
@@ -1867,6 +1869,47 @@ In that event here are some steps you can try to resolve this:
 			try { Directory.Delete(downloadDirectory, true); } catch { }
 		}
 
+		enum DlssGpuMode { Rtx50, Rtx2040 }
+
+		static (bool rtx50, bool rtx2040) DetectDlssGpuFamilies()
+		{
+			bool rtx50 = false, rtx2040 = false;
+			try
+			{
+				using (var searcher = new ManagementObjectSearcher("SELECT Name FROM Win32_VideoController"))
+				foreach (ManagementObject item in searcher.Get())
+				{
+					string name = item["Name"] as string ?? string.Empty;
+					if (name.IndexOf("NVIDIA", StringComparison.OrdinalIgnoreCase) < 0) continue;
+					if (name.IndexOf("RTX 50", StringComparison.OrdinalIgnoreCase) >= 0) rtx50 = true;
+					if (name.IndexOf("RTX 20", StringComparison.OrdinalIgnoreCase) >= 0 || name.IndexOf("RTX 30", StringComparison.OrdinalIgnoreCase) >= 0 || name.IndexOf("RTX 40", StringComparison.OrdinalIgnoreCase) >= 0) rtx2040 = true;
+				}
+			}
+			catch { }
+			return (rtx50, rtx2040);
+		}
+
+		DlssGpuMode? SelectDlssGpuMode()
+		{
+			var families = DetectDlssGpuFamilies();
+			if (!families.rtx50 && !families.rtx2040)
+			{
+				MessageBox.Show(this, "NVIDIA RTX 20/30/40 или RTX 50 не обнаружена. Установка DLSS 5 остановлена.", "DLSS 5", MessageBoxButton.OK, MessageBoxImage.Warning);
+				return null;
+			}
+			var dialog = new Window { Title = "Выбор профиля DLSS 5", Width = 430, Height = 215, ResizeMode = ResizeMode.NoResize, WindowStartupLocation = WindowStartupLocation.CenterOwner, Owner = this };
+			var panel = new StackPanel { Margin = new Thickness(18) };
+			panel.Children.Add(new TextBlock { Text = "Выберите профиль под вашу видеокарту:", Margin = new Thickness(0, 0, 0, 14), FontSize = 15 });
+			DlssGpuMode? selected = null;
+			var button50 = new Button { Content = "RTX 50", Height = 34, Margin = new Thickness(0, 0, 0, 8), IsEnabled = families.rtx50 };
+			var button2040 = new Button { Content = "RTX 20 / 30 / 40", Height = 34, IsEnabled = families.rtx2040 };
+			button50.Click += (sender, args) => { selected = DlssGpuMode.Rtx50; dialog.DialogResult = true; };
+			button2040.Click += (sender, args) => { selected = DlssGpuMode.Rtx2040; dialog.DialogResult = true; };
+			panel.Children.Add(button50); panel.Children.Add(button2040); dialog.Content = panel;
+			dialog.ShowDialog();
+			return selected;
+		}
+
 		static string DownloadDlss5Asset(string directory, string fileName, string expectedHash)
 		{
 			string path = Path.Combine(directory, fileName);
@@ -1995,6 +2038,7 @@ In that event here are some steps you can try to resolve this:
 		}
 		void OnDlss5ButtonClick(object sender, RoutedEventArgs e)
 		{
+			if (SelectDlssGpuMode() == null) return;
 			Dlss5Button.IsEnabled = false;
 			RunTaskWithExceptionHandling(InstallDlss5);
 		}
