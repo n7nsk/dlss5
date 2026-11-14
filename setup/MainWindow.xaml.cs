@@ -204,6 +204,7 @@ namespace ReShade.Setup
 
 		InstallInfo currentInfo = new InstallInfo();
 		InstallOperation currentOperation = InstallOperation.Install;
+		bool dlss5OperationInProgress;
 
 		static void MoveFiles(string sourcePath, string targetPath)
 		{
@@ -437,6 +438,7 @@ namespace ReShade.Setup
 		void UpdateStatusAndFinish(bool success, string message)
 		{
 			currentOperation = InstallOperation.Finished;
+			dlss5OperationInProgress = false;
 
 			Dispatcher.Invoke(() =>
 			{
@@ -2129,6 +2131,7 @@ In that event here are some steps you can try to resolve this:
 			var mode = SelectDlssGpuMode();
 			if (mode == null) return;
 			Dlss5Button.IsEnabled = false;
+			dlss5OperationInProgress = true;
 			RunTaskWithExceptionHandling(() => InstallDlss5(mode.Value));
 		}
 		void OnRemoveDlss5ButtonClick(object sender, RoutedEventArgs e)
@@ -2167,6 +2170,7 @@ In that event here are some steps you can try to resolve this:
 			NextButton.Visibility = isFinished ? Visibility.Collapsed : Visibility.Visible;
 			FinishButton.Visibility = isFinished ? Visibility.Visible : Visibility.Collapsed;
 			Dlss5Button.Visibility = isFinished && currentOperation != InstallOperation.Uninstall && !isHeadless ? Visibility.Visible : Visibility.Collapsed;
+			if (isFinished && !dlss5OperationInProgress) Dlss5Button.IsEnabled = true;
 			RemoveDlss5Button.Visibility = isFinished && currentOperation != InstallOperation.Uninstall && !isHeadless && currentInfo.targetPath != null && FindDlss5Manifest(Path.GetDirectoryName(currentInfo.targetPath)) != null ? Visibility.Visible : Visibility.Collapsed;
 
 			SkipButton.Visibility = isSkippable ? Visibility.Visible : Visibility.Collapsed;
