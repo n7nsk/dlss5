@@ -13,6 +13,7 @@ using System.Linq;
 using System.Net;
 using System.Reflection;
 using System.Security.AccessControl;
+using System.Security.Cryptography;
 using System.Security.Principal;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -1821,17 +1822,12 @@ In that event here are some steps you can try to resolve this:
 			}
 
 			string targetDirectory = Path.GetDirectoryName(currentInfo.targetPath);
-			string assetsDirectory = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "dlss5");
-			string streamlineArchive = Path.Combine(assetsDirectory, "DLSS310.8.0-Streamline2.13.zip");
-			string neuralArchive = Path.Combine(assetsDirectory, "nvngx_dlssnr_2026_10_16.zip");
-			string renodxAddon = Path.Combine(assetsDirectory, "renodx-dlss.addon64");
-			if (!File.Exists(streamlineArchive) || !File.Exists(neuralArchive) || !File.Exists(renodxAddon))
-			{
-				UpdateStatusAndFinish(false, "DLSS 5 assets were not found next to the setup executable.");
-				return;
-			}
-
 			UpdateStatus("Installing DLSS 5 components...");
+			string downloadDirectory = Path.Combine(Path.GetTempPath(), "reshade-dlss5-" + Guid.NewGuid().ToString("N"));
+			Directory.CreateDirectory(downloadDirectory);
+			string streamlineArchive = DownloadDlss5Asset(downloadDirectory, "DLSS310.8.0-Streamline2.13.zip", "3FDB7CB25250259332550F419DBAC516A2EBA778D8592DA75CB2FE8ABFC781D8");
+			string neuralArchive = DownloadDlss5Asset(downloadDirectory, "nvngx_dlssnr_2026_10_16.zip", "764F94A32EC302B9FE4DA9A1246FD7DD9176E490D8766667687C9FD89DA2AB12");
+			string renodxAddon = DownloadDlss5Asset(downloadDirectory, "renodx-dlss.addon64", "A8FD34B531FD22C3DBD008ED8FD3CBFCCA2FB451729E19CD1FC2E4C85B5068D4");
 			string backupDirectory = Path.Combine(targetDirectory, ".reshade-dlss5-backup", DateTime.Now.ToString("yyyyMMdd-HHmmss", CultureInfo.InvariantCulture));
 			Directory.CreateDirectory(backupDirectory);
 			var backedUp = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -1868,6 +1864,25 @@ In that event here are some steps you can try to resolve this:
 			}
 			CopyEntry(renodxAddon, Path.Combine(targetDirectory, "renodx-dlss.addon64"));
 			UpdateStatusAndFinish(true, "Successfully installed DLSS 5, Streamline and RenoDX. A backup was created in .reshade-dlss5-backup.");
+			try { Directory.Delete(downloadDirectory, true); } catch { }
+		}
+
+		static string DownloadDlss5Asset(string directory, string fileName, string expectedHash)
+		{
+			string path = Path.Combine(directory, fileName);
+			string url = "https://github.com/n7nsk/dlss5/releases/download/v0.1.0/" + Uri.EscapeDataString(fileName);
+			using (var client = new WebClient())
+			{
+				client.Headers[HttpRequestHeader.UserAgent] = "ReShade-DLSS5-Installer";
+				client.DownloadFile(url, path);
+			}
+			using (var sha = SHA256.Create())
+			using (var input = File.OpenRead(path))
+			{
+				string actualHash = BitConverter.ToString(sha.ComputeHash(input)).Replace("-", string.Empty);
+				if (!actualHash.Equals(expectedHash, StringComparison.OrdinalIgnoreCase)) throw new InvalidDataException("SHA-256 verification failed for " + fileName + ".");
+			}
+			return path;
 		}
 
 		void OnWindowInit(object sender, EventArgs e)
