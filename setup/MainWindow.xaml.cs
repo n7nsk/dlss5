@@ -440,6 +440,8 @@ namespace ReShade.Setup
 
 			Dispatcher.Invoke(() =>
 			{
+				Dlss5Button.IsEnabled = true;
+				RemoveDlss5Button.IsEnabled = true;
 				status.UpdateStatus(message, success);
 
 				CurrentPage.Navigate(status);
