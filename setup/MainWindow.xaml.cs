@@ -1835,6 +1835,7 @@ In that event here are some steps you can try to resolve this:
 			string backupDirectory = Path.Combine(targetDirectory, ".reshade-dlss5-backup", DateTime.Now.ToString("yyyyMMdd-HHmmss", CultureInfo.InvariantCulture));
 			Directory.CreateDirectory(backupDirectory);
 			var backedUp = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+			var installedFiles = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 			void Backup(string destination)
 			{
 				if (!File.Exists(destination) || !backedUp.Add(destination)) return;
@@ -1848,6 +1849,7 @@ In that event here are some steps you can try to resolve this:
 				Backup(destination);
 				Directory.CreateDirectory(Path.GetDirectoryName(destination));
 				File.Copy(source, destination, true);
+				installedFiles.Add(destination);
 			}
 			using (var archive = ZipFile.OpenRead(streamlineArchive))
 			{
@@ -1871,8 +1873,86 @@ In that event here are some steps you can try to resolve this:
 			}
 			else CopyEntry(neuralAsset, Path.Combine(targetDirectory, "nvngx_dlssnr.dll"));
 			CopyEntry(renodxAddon, Path.Combine(targetDirectory, "renodx-dlss.addon64"));
+			string manifestPath = Path.Combine(backupDirectory, "manifest.txt");
+			using (var manifest = new StreamWriter(manifestPath, false))
+			{
+				manifest.WriteLine("ReShade DLSS 5 manifest v1");
+				foreach (string installedFile in installedFiles.OrderBy(path => path, StringComparer.OrdinalIgnoreCase))
+				{
+					string relative = installedFile.Substring(targetDirectory.Length).TrimStart(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+					manifest.WriteLine(HashFile(installedFile) + "|" + relative);
+				}
+			}
 			UpdateStatusAndFinish(true, "Successfully installed DLSS 5, Streamline and RenoDX. A backup was created in .reshade-dlss5-backup.");
 			try { Directory.Delete(downloadDirectory, true); } catch { }
+		}
+
+		static string HashFile(string path)
+		{
+			using (var sha = SHA256.Create())
+			using (var input = File.OpenRead(path))
+				return BitConverter.ToString(sha.ComputeHash(input)).Replace("-", string.Empty);
+		}
+
+		string FindDlss5Manifest(string targetDirectory)
+		{
+			string backupRoot = Path.Combine(targetDirectory, ".reshade-dlss5-backup");
+			if (!Directory.Exists(backupRoot)) return null;
+			return Directory.GetFiles(backupRoot, "manifest.txt", SearchOption.AllDirectories)
+				.OrderByDescending(path => File.GetLastWriteTimeUtc(path)).FirstOrDefault();
+		}
+
+		void RemoveDlss5()
+		{
+			if (currentInfo.targetPath == null || !File.Exists(currentInfo.targetPath))
+			{
+				UpdateStatusAndFinish(false, "No target application was provided for DLSS 5 removal.");
+				return;
+			}
+			string targetDirectory = Path.GetDirectoryName(currentInfo.targetPath);
+			string manifestPath = FindDlss5Manifest(targetDirectory);
+			if (manifestPath == null)
+			{
+				UpdateStatusAndFinish(false, "No DLSS 5 installation was found for this game.");
+				return;
+			}
+			string backupDirectory = Path.GetDirectoryName(manifestPath);
+			var skipped = new List<string>();
+			foreach (string line in File.ReadAllLines(manifestPath).Skip(1))
+			{
+				int separator = line.IndexOf('|');
+				if (separator <= 0) continue;
+				string expectedHash = line.Substring(0, separator);
+				string relative = line.Substring(separator + 1);
+				string destination = Path.GetFullPath(Path.Combine(targetDirectory, relative));
+				if (!destination.StartsWith(Path.GetFullPath(targetDirectory) + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase)) continue;
+				if (File.Exists(destination) && !HashFile(destination).Equals(expectedHash, StringComparison.OrdinalIgnoreCase))
+				{
+					skipped.Add(relative);
+					continue;
+				}
+				string original = Path.Combine(backupDirectory, relative);
+				if (File.Exists(original))
+				{
+					Directory.CreateDirectory(Path.GetDirectoryName(destination));
+					File.Copy(original, destination, true);
+				}
+				else if (File.Exists(destination)) File.Delete(destination);
+			}
+			if (skipped.Count == 0)
+			{
+				try
+				{
+					Directory.Delete(backupDirectory, true);
+					string backupRoot = Path.Combine(targetDirectory, ".reshade-dlss5-backup");
+					if (Directory.Exists(backupRoot) && !Directory.EnumerateFileSystemEntries(backupRoot).Any()) Directory.Delete(backupRoot);
+				}
+				catch { }
+			}
+			string message = skipped.Count == 0
+				? "DLSS 5 was removed and the original files were restored. ReShade was left untouched."
+				: "DLSS 5 was removed where files were unchanged. Modified files were preserved:\n" + string.Join("\n", skipped);
+			UpdateStatusAndFinish(true, message);
 		}
 
 		enum DlssGpuMode { Rtx50, Rtx2040 }
@@ -2049,6 +2129,12 @@ In that event here are some steps you can try to resolve this:
 			Dlss5Button.IsEnabled = false;
 			RunTaskWithExceptionHandling(() => InstallDlss5(mode.Value));
 		}
+		void OnRemoveDlss5ButtonClick(object sender, RoutedEventArgs e)
+		{
+			if (MessageBox.Show(this, "Remove DLSS 5 files and restore the original files? ReShade itself will not be removed.", "Remove DLSS 5", MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes) return;
+			RemoveDlss5Button.IsEnabled = false;
+			RunTaskWithExceptionHandling(RemoveDlss5);
+		}
 
 		void OnSkipButtonClick(object sender, RoutedEventArgs e)
 		{
@@ -2079,6 +2165,7 @@ In that event here are some steps you can try to resolve this:
 			NextButton.Visibility = isFinished ? Visibility.Collapsed : Visibility.Visible;
 			FinishButton.Visibility = isFinished ? Visibility.Visible : Visibility.Collapsed;
 			Dlss5Button.Visibility = isFinished && currentOperation != InstallOperation.Uninstall && !isHeadless ? Visibility.Visible : Visibility.Collapsed;
+			RemoveDlss5Button.Visibility = isFinished && currentOperation != InstallOperation.Uninstall && !isHeadless && currentInfo.targetPath != null && FindDlss5Manifest(Path.GetDirectoryName(currentInfo.targetPath)) != null ? Visibility.Visible : Visibility.Collapsed;
 
 			SkipButton.Visibility = isSkippable ? Visibility.Visible : Visibility.Collapsed;
 			CancelButton.Visibility = isSkippable ? Visibility.Collapsed : Visibility.Visible;
