@@ -1812,6 +1812,64 @@ In that event here are some steps you can try to resolve this:
 			}
 		}
 
+		void InstallDlss5()
+		{
+			if (currentInfo.targetPath == null || !File.Exists(currentInfo.targetPath))
+			{
+				UpdateStatusAndFinish(false, "No target application was provided for DLSS 5 installation.");
+				return;
+			}
+
+			string targetDirectory = Path.GetDirectoryName(currentInfo.targetPath);
+			string assetsDirectory = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "dlss5");
+			string streamlineArchive = Path.Combine(assetsDirectory, "DLSS310.8.0-Streamline2.13.zip");
+			string neuralArchive = Path.Combine(assetsDirectory, "nvngx_dlssnr_2026_10_16.zip");
+			string renodxAddon = Path.Combine(assetsDirectory, "renodx-dlss.addon64");
+			if (!File.Exists(streamlineArchive) || !File.Exists(neuralArchive) || !File.Exists(renodxAddon))
+			{
+				UpdateStatusAndFinish(false, "DLSS 5 assets were not found next to the setup executable.");
+				return;
+			}
+
+			UpdateStatus("Installing DLSS 5 components...");
+			string backupDirectory = Path.Combine(targetDirectory, ".reshade-dlss5-backup", DateTime.Now.ToString("yyyyMMdd-HHmmss", CultureInfo.InvariantCulture));
+			Directory.CreateDirectory(backupDirectory);
+			var backedUp = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+			void Backup(string destination)
+			{
+				if (!File.Exists(destination) || !backedUp.Add(destination)) return;
+				string relative = destination.Substring(targetDirectory.Length).TrimStart(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+				string backupPath = Path.Combine(backupDirectory, relative);
+				Directory.CreateDirectory(Path.GetDirectoryName(backupPath));
+				File.Copy(destination, backupPath, true);
+			}
+			void CopyEntry(string source, string destination)
+			{
+				Backup(destination);
+				Directory.CreateDirectory(Path.GetDirectoryName(destination));
+				File.Copy(source, destination, true);
+			}
+			using (var archive = ZipFile.OpenRead(streamlineArchive))
+			{
+				foreach (var entry in archive.Entries)
+				{
+					if (string.IsNullOrEmpty(entry.Name)) continue;
+					string destination = Path.GetFullPath(Path.Combine(targetDirectory, entry.FullName));
+					if (!destination.StartsWith(Path.GetFullPath(targetDirectory) + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase)) throw new InvalidDataException("Unsafe path in Streamline archive.");
+					string temporary = Path.Combine(Path.GetTempPath(), "reshade-dlss5-" + Guid.NewGuid().ToString("N") + ".bin");
+					try { entry.ExtractToFile(temporary, true); CopyEntry(temporary, destination); } finally { if (File.Exists(temporary)) File.Delete(temporary); }
+				}
+			}
+			using (var archive = ZipFile.OpenRead(neuralArchive))
+			{
+				var entry = archive.GetEntry("nvngx_dlssnr.dll") ?? throw new InvalidDataException("nvngx_dlssnr.dll is missing from the neural rendering archive.");
+				string temporary = Path.Combine(Path.GetTempPath(), "reshade-dlss5-nr-" + Guid.NewGuid().ToString("N") + ".dll");
+				try { entry.ExtractToFile(temporary, true); CopyEntry(temporary, Path.Combine(targetDirectory, "nvngx_dlssnr.dll")); } finally { if (File.Exists(temporary)) File.Delete(temporary); }
+			}
+			CopyEntry(renodxAddon, Path.Combine(targetDirectory, "renodx-dlss.addon64"));
+			UpdateStatusAndFinish(true, "Successfully installed DLSS 5, Streamline and RenoDX. A backup was created in .reshade-dlss5-backup.");
+		}
+
 		void OnWindowInit(object sender, EventArgs e)
 		{
 			DWM.HideIcon(this);
@@ -1920,6 +1978,11 @@ In that event here are some steps you can try to resolve this:
 		{
 			Close();
 		}
+		void OnDlss5ButtonClick(object sender, RoutedEventArgs e)
+		{
+			Dlss5Button.IsEnabled = false;
+			RunTaskWithExceptionHandling(InstallDlss5);
+		}
 
 		void OnSkipButtonClick(object sender, RoutedEventArgs e)
 		{
@@ -1949,6 +2012,7 @@ In that event here are some steps you can try to resolve this:
 
 			NextButton.Visibility = isFinished ? Visibility.Collapsed : Visibility.Visible;
 			FinishButton.Visibility = isFinished ? Visibility.Visible : Visibility.Collapsed;
+			Dlss5Button.Visibility = isFinished && currentOperation != InstallOperation.Uninstall && !isHeadless ? Visibility.Visible : Visibility.Collapsed;
 
 			SkipButton.Visibility = isSkippable ? Visibility.Visible : Visibility.Collapsed;
 			CancelButton.Visibility = isSkippable ? Visibility.Collapsed : Visibility.Visible;
