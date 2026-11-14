@@ -52,7 +52,6 @@
     <NoWarn>1633</NoWarn>
   </PropertyGroup>
   <ItemGroup>
-    <Content Include="..\assets\dlss5\**" Link="dlss5\%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
     <Reference Include="PresentationCore" />
     <Reference Include="PresentationFramework" />
     <Reference Include="System" />
