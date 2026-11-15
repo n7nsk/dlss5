@@ -33,13 +33,14 @@ namespace ReShade.Setup
 		public MainWindow()
 		{
 			InitializeComponent();
+			isRussian = Path.GetFileNameWithoutExtension(Process.GetCurrentProcess().MainModule.FileName).IndexOf(" RU", StringComparison.OrdinalIgnoreCase) >= 0;
 			Dlss5Button.IsEnabled = true;
 			Dlss5Button.Opacity = 1.0;
 			Dlss5Label.Foreground = Brushes.Black;
 
 			var assembly = Assembly.GetExecutingAssembly();
 			var productVersion = assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>().InformationalVersion;
-			Title = "ReShade Setup v" + productVersion;
+			Title = (isRussian ? "Установщик ReShade v" : "ReShade Setup v") + productVersion;
 
 			if (productVersion.Contains(" "))
 			{
@@ -208,6 +209,19 @@ namespace ReShade.Setup
 		InstallInfo currentInfo = new InstallInfo();
 		InstallOperation currentOperation = InstallOperation.Install;
 		bool dlss5OperationInProgress;
+		readonly bool isRussian;
+		static readonly Dictionary<string, string> RussianUi = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+		{
+			["_Back"] = "_Назад", ["_Cancel"] = "_Отмена", ["_Finish"] = "_Готово", ["_Next"] = "_Далее", ["_Skip"] = "_Пропустить",
+			["Install DLSS 5"] = "Установить DLSS 5", ["Remove DLSS 5"] = "Удалить DLSS 5", ["Become a patron"] = "Поддержать проект",
+			["Select a game or application:"] = "Выберите игру или приложение:", ["Select the rendering API"] = "Выберите графический API",
+			["Select the operation to perform:"] = "Выберите операцию:", ["Select effects to install:"] = "Выберите эффекты для установки:",
+			["Select add-ons to install:"] = "Выберите дополнения для установки:", ["Sort by:"] = "Сортировка:",
+			["Recently Used"] = "Недавно использованные", ["A to Z"] = "От А до Я", ["Z to A"] = "От Я до А",
+			["Can't find the desired game in the list?"] = "Не нашли нужную игру в списке?", ["_Browse..."] = "_Обзор...",
+			["Update _ReShade only"] = "Обновить только _ReShade", ["Update ReShade and _effects"] = "Обновить ReShade и _эффекты",
+			["_Uninstall ReShade and effects"] = "_Удалить ReShade и эффекты"
+		};
 
 		static void MoveFiles(string sourcePath, string targetPath)
 		{
@@ -2193,6 +2207,7 @@ In that event here are some steps you can try to resolve this:
 
 		void OnCurrentPageNavigated(object sender, NavigationEventArgs e)
 		{
+			if (isRussian) ApplyRussianLocalization(e.Content as DependencyObject);
 			bool isFinished = currentOperation == InstallOperation.Finished;
 			bool isSkippable = e.Content is SelectAddonsPage || e.Content is SelectEffectsPage;
 			bool hasDlss5 = currentInfo.targetPath != null && FindDlss5Manifest(Path.GetDirectoryName(currentInfo.targetPath)) != null;
@@ -2215,6 +2230,16 @@ In that event here are some steps you can try to resolve this:
 			{
 				NextButton.IsEnabled = isFinished || !(e.Content is StatusPage);
 			}
+		}
+
+		void ApplyRussianLocalization(DependencyObject root)
+		{
+			if (root == null) return;
+			if (root is TextBlock textBlock && RussianUi.TryGetValue(textBlock.Text, out string text)) textBlock.Text = text;
+			if (root is Label label && label.Content is string labelText && RussianUi.TryGetValue(labelText, out string translatedLabel)) label.Content = translatedLabel;
+			if (root is Button button && button.Content is string buttonText && RussianUi.TryGetValue(buttonText, out string translatedButton)) button.Content = translatedButton;
+			if (root is TextBox textBox && RussianUi.TryGetValue(textBox.Text, out string translatedTextBox)) textBox.Text = translatedTextBox;
+			for (int i = 0; i < VisualTreeHelper.GetChildrenCount(root); i++) ApplyRussianLocalization(VisualTreeHelper.GetChild(root, i));
 		}
 	}
 }
