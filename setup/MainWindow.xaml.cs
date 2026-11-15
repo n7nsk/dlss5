@@ -2025,7 +2025,7 @@ In that event here are some steps you can try to resolve this:
 		string DownloadDlss5Asset(string directory, string fileName, string expectedHash)
 		{
 			string path = Path.Combine(directory, fileName);
-			string url = "https://github.com/n7nsk/dlss5/releases/download/v0.1.0/" + Uri.EscapeDataString(fileName);
+			string url = "https://github.com/n7nsk/dlss5-components/releases/download/v0.1.0/" + Uri.EscapeDataString(fileName);
 			using (var client = new WebClient())
 			{
 				client.Headers[HttpRequestHeader.UserAgent] = "ReShade-DLSS5-Installer";
