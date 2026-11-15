@@ -22,7 +22,6 @@ using System.Windows;
 using System.Windows.Media;
 using System.Windows.Controls;
 using System.Windows.Navigation;
-using System.Windows.Threading;
 using Microsoft.Win32;
 using ReShade.Setup.Pages;
 using ReShade.Setup.Utilities;
@@ -2208,7 +2207,7 @@ In that event here are some steps you can try to resolve this:
 
 		void OnCurrentPageNavigated(object sender, NavigationEventArgs e)
 		{
-			if (isRussian) Dispatcher.BeginInvoke(DispatcherPriority.ApplicationIdle, new Action(() => ApplyRussianLocalization(e.Content as DependencyObject)));
+			if (isRussian) Dispatcher.BeginInvoke(new Action(() => ApplyRussianLocalization(e.Content as DependencyObject)));
 			bool isFinished = currentOperation == InstallOperation.Finished;
 			bool isSkippable = e.Content is SelectAddonsPage || e.Content is SelectEffectsPage;
 			bool hasDlss5 = currentInfo.targetPath != null && FindDlss5Manifest(Path.GetDirectoryName(currentInfo.targetPath)) != null;
@@ -2241,8 +2240,6 @@ In that event here are some steps you can try to resolve this:
 			if (root is Button button && button.Content is string buttonText && RussianUi.TryGetValue(buttonText, out string translatedButton)) button.Content = translatedButton;
 			if (root is TextBox textBox && RussianUi.TryGetValue(textBox.Text, out string translatedTextBox)) textBox.Text = translatedTextBox;
 			for (int i = 0; i < VisualTreeHelper.GetChildrenCount(root); i++) ApplyRussianLocalization(VisualTreeHelper.GetChild(root, i));
-			foreach (object child in LogicalTreeHelper.GetChildren(root))
-				if (child is DependencyObject dependencyChild && !ReferenceEquals(child, root)) ApplyRussianLocalization(dependencyChild);
 		}
 	}
 }
