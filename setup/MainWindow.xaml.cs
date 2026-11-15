@@ -2207,7 +2207,7 @@ In that event here are some steps you can try to resolve this:
 
 		void OnCurrentPageNavigated(object sender, NavigationEventArgs e)
 		{
-			if (isRussian) Dispatcher.BeginInvoke(new Action(() => ApplyRussianLocalization(e.Content as DependencyObject)));
+			if (isRussian) ApplyRussianLocalization(e.Content as DependencyObject);
 			bool isFinished = currentOperation == InstallOperation.Finished;
 			bool isSkippable = e.Content is SelectAddonsPage || e.Content is SelectEffectsPage;
 			bool hasDlss5 = currentInfo.targetPath != null && FindDlss5Manifest(Path.GetDirectoryName(currentInfo.targetPath)) != null;
