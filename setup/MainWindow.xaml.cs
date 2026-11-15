@@ -33,6 +33,7 @@ namespace ReShade.Setup
 		public MainWindow()
 		{
 			InitializeComponent();
+			Dlss5Button.IsEnabled = true;
 
 			var assembly = Assembly.GetExecutingAssembly();
 			var productVersion = assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>().InformationalVersion;
