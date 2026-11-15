@@ -33,6 +33,8 @@ A quick overview of what some of the source code files contain:
 |[runtime.cpp](source/runtime.cpp)                                     |Core ReShade runtime including effect and preset management            |
 |[runtime_gui.cpp](source/runtime_gui.cpp)                             |Overlay rendering and everything user interface related                |
 
+The optional DLSS 5 installer downloads third-party NVIDIA and RenoDX binaries. These binaries are not covered by the ReShade license. See [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md) for attribution and licensing information.
+
 ## Contributing
 
 Any contributions to the project are welcomed, it's recommended to use GitHub [pull requests](https://help.github.com/articles/using-pull-requests/).
