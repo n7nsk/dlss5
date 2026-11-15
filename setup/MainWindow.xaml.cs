@@ -266,6 +266,13 @@ namespace ReShade.Setup
 				return false;
 			}
 		}
+		static void DeleteFileForced(string path)
+		{
+			if (!File.Exists(path)) return;
+			File.SetAttributes(path, FileAttributes.Normal);
+			File.Delete(path);
+			if (File.Exists(path)) throw new IOException("File still exists after deletion: " + path);
+		}
 
 		static string GetModuleProductName(string path)
 		{
@@ -1942,7 +1949,7 @@ In that event here are some steps you can try to resolve this:
 					.ToArray();
 				foreach (string legacyFile in legacyFiles)
 				{
-					File.Delete(legacyFile);
+					DeleteFileForced(legacyFile);
 				}
 				UpdateStatusAndFinish(legacyFiles.Length > 0,
 					legacyFiles.Length > 0 ? "Legacy DLSS 5 files were removed." : "No DLSS 5 installation was found for this game.");
@@ -1969,7 +1976,7 @@ In that event here are some steps you can try to resolve this:
 					Directory.CreateDirectory(Path.GetDirectoryName(destination));
 					File.Copy(original, destination, true);
 				}
-				else if (File.Exists(destination)) File.Delete(destination);
+				else if (File.Exists(destination)) DeleteFileForced(destination);
 			}
 			if (skipped.Count == 0)
 			{
