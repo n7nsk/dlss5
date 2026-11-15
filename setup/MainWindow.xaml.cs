@@ -35,13 +35,6 @@ namespace ReShade.Setup
 		{
 			InitializeComponent();
 			isRussian = Path.GetFileNameWithoutExtension(Process.GetCurrentProcess().MainModule.FileName).IndexOf(" RU", StringComparison.OrdinalIgnoreCase) >= 0;
-			if (isRussian)
-			{
-				russianLocalizationTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(250) };
-				russianLocalizationTimer.Tick += (sender, timerArgs) => ApplyRussianLocalization(CurrentPage.Content as DependencyObject);
-				russianLocalizationTimer.Start();
-			}
-			else russianLocalizationTimer = null;
 			Dlss5Button.IsEnabled = true;
 			Dlss5Button.Opacity = 1.0;
 			Dlss5Label.Foreground = Brushes.Black;
@@ -218,7 +211,6 @@ namespace ReShade.Setup
 		InstallOperation currentOperation = InstallOperation.Install;
 		bool dlss5OperationInProgress;
 		readonly bool isRussian;
-		readonly DispatcherTimer russianLocalizationTimer;
 		static readonly Dictionary<string, string> RussianUi = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
 		{
 			["_Back"] = "_Назад", ["_Cancel"] = "_Отмена", ["_Finish"] = "_Готово", ["_Next"] = "_Далее", ["_Skip"] = "_Пропустить",
