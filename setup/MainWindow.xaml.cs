@@ -1934,7 +1934,18 @@ In that event here are some steps you can try to resolve this:
 			string manifestPath = FindDlss5Manifest(targetDirectory);
 			if (manifestPath == null)
 			{
-				UpdateStatusAndFinish(false, "No DLSS 5 installation was found for this game.");
+				// Clean up files left by early builds that did not create a manifest.
+				// Limit this legacy cleanup to the exact DLSS 5 filenames.
+				var legacyFiles = new[] { "nvngx_dlssnr.dll", "renodx-dlss.addon64" }
+					.Select(name => Path.Combine(targetDirectory, name))
+					.Where(File.Exists)
+					.ToArray();
+				foreach (string legacyFile in legacyFiles)
+				{
+					File.Delete(legacyFile);
+				}
+				UpdateStatusAndFinish(legacyFiles.Length > 0,
+					legacyFiles.Length > 0 ? "Legacy DLSS 5 files were removed." : "No DLSS 5 installation was found for this game.");
 				return;
 			}
 			string backupDirectory = Path.GetDirectoryName(manifestPath);
