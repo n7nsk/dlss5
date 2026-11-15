@@ -1965,6 +1965,12 @@ In that event here are some steps you can try to resolve this:
 				string relative = line.Substring(separator + 1);
 				string destination = Path.GetFullPath(Path.Combine(targetDirectory, relative));
 				if (!destination.StartsWith(Path.GetFullPath(targetDirectory) + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase)) continue;
+				// DLSS-NR is owned by the DLSS 5 package. Never restore an older copy of it.
+				if (relative.Equals("nvngx_dlssnr.dll", StringComparison.OrdinalIgnoreCase))
+				{
+					if (File.Exists(destination)) DeleteFileForced(destination);
+					continue;
+				}
 				if (File.Exists(destination) && !HashFile(destination).Equals(expectedHash, StringComparison.OrdinalIgnoreCase))
 				{
 					skipped.Add(relative);
