@@ -2030,7 +2030,7 @@ In that event here are some steps you can try to resolve this:
 			{
 				client.Headers[HttpRequestHeader.UserAgent] = "ReShade-DLSS5-Installer";
 				client.DownloadProgressChanged += (sender, args) => Dispatcher.Invoke(() => status.UpdateDownloadProgress(fileName, args.ProgressPercentage));
-				client.DownloadFile(url, path);
+				client.DownloadFileTaskAsync(new Uri(url), path).GetAwaiter().GetResult();
 			}
 			using (var sha = SHA256.Create())
 			using (var input = File.OpenRead(path))
