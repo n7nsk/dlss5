@@ -1459,6 +1459,18 @@ In that event here are some steps you can try to resolve this:
 					}
 				}
 
+				// Remove only empty ReShade user files/directories. Preserve custom presets and shader assets.
+				string defaultPresetPath = Path.Combine(basePath, "ReShadePreset.ini");
+				if (File.Exists(defaultPresetPath) && new FileInfo(defaultPresetPath).Length == 0)
+				{
+					File.Delete(defaultPresetPath);
+				}
+				string defaultShaderPath = Path.Combine(basePath, "reshade-shaders");
+				if (Directory.Exists(defaultShaderPath) && !Directory.EnumerateFileSystemEntries(defaultShaderPath, "*", SearchOption.AllDirectories).Any())
+				{
+					Directory.Delete(defaultShaderPath, true);
+				}
+
 				// Delete add-ons
 				foreach (string addonFile in Directory.EnumerateFiles(Path.GetDirectoryName(currentInfo.targetPath), currentInfo.is64Bit ? "*.addon64" : "*.addon32", SearchOption.TopDirectoryOnly))
 				{
