@@ -2170,6 +2170,7 @@ In that event here are some steps you can try to resolve this:
 			NextButton.Visibility = isFinished ? Visibility.Collapsed : Visibility.Visible;
 			FinishButton.Visibility = isFinished ? Visibility.Visible : Visibility.Collapsed;
 			Dlss5Button.Visibility = isFinished && currentOperation != InstallOperation.Uninstall && !isHeadless ? Visibility.Visible : Visibility.Collapsed;
+			if (isFinished && currentOperation != InstallOperation.Uninstall) Dlss5Button.IsEnabled = true;
 			RemoveDlss5Button.Visibility = isFinished && currentOperation != InstallOperation.Uninstall && !isHeadless && currentInfo.targetPath != null && FindDlss5Manifest(Path.GetDirectoryName(currentInfo.targetPath)) != null ? Visibility.Visible : Visibility.Collapsed;
 
 			SkipButton.Visibility = isSkippable ? Visibility.Visible : Visibility.Collapsed;
