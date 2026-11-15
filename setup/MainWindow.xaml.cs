@@ -1988,9 +1988,9 @@ In that event here are some steps you can try to resolve this:
 				MessageBox.Show(this, "NVIDIA RTX 20/30/40 или RTX 50 не обнаружена. Установка DLSS 5 остановлена.", "DLSS 5", MessageBoxButton.OK, MessageBoxImage.Warning);
 				return null;
 			}
-			var dialog = new Window { Title = "Выбор профиля DLSS 5", Width = 430, Height = 215, ResizeMode = ResizeMode.NoResize, WindowStartupLocation = WindowStartupLocation.CenterOwner, Owner = this };
+			var dialog = new Window { Title = "Выбор профиля DLSS 5", Width = 430, Height = 215, ResizeMode = ResizeMode.NoResize, WindowStartupLocation = WindowStartupLocation.CenterOwner, Owner = this, Background = new SolidColorBrush(Color.FromRgb(31, 31, 31)), Foreground = Brushes.White };
 			var panel = new StackPanel { Margin = new Thickness(18) };
-			panel.Children.Add(new TextBlock { Text = "Выберите профиль под вашу видеокарту:", Margin = new Thickness(0, 0, 0, 14), FontSize = 15, Foreground = Brushes.Black });
+			panel.Children.Add(new TextBlock { Text = "Выберите профиль под вашу видеокарту:", Margin = new Thickness(0, 0, 0, 14), FontSize = 15, Foreground = Brushes.White });
 			DlssGpuMode? selected = null;
 			var button50 = new Button { Content = "RTX 50", Height = 34, Margin = new Thickness(0, 0, 0, 8), Foreground = families.rtx50 ? Brushes.Black : Brushes.Gray, Background = families.rtx50 ? Brushes.White : Brushes.LightGray };
 			var button2040 = new Button { Content = "RTX 20 / 30 / 40", Height = 34, Foreground = families.rtx2040 ? Brushes.Black : Brushes.Gray, Background = families.rtx2040 ? Brushes.White : Brushes.LightGray };
