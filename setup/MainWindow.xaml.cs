@@ -35,6 +35,7 @@ namespace ReShade.Setup
 			InitializeComponent();
 			Dlss5Button.IsEnabled = true;
 			Dlss5Button.Opacity = 1.0;
+			Dlss5Label.Foreground = Brushes.Black;
 
 			var assembly = Assembly.GetExecutingAssembly();
 			var productVersion = assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>().InformationalVersion;
@@ -446,6 +447,7 @@ namespace ReShade.Setup
 			{
 				Dlss5Button.IsEnabled = true;
 				Dlss5Button.Opacity = 1.0;
+				Dlss5Label.Foreground = Brushes.Black;
 				RemoveDlss5Button.IsEnabled = true;
 				status.UpdateStatus(message, success);
 
@@ -2152,7 +2154,8 @@ In that event here are some steps you can try to resolve this:
 			var mode = SelectDlssGpuMode();
 			if (mode == null) return;
 			dlss5OperationInProgress = true;
-			Dlss5Button.Opacity = 0.55;
+			Dlss5Button.Opacity = 1.0;
+			Dlss5Label.Foreground = Brushes.Gray;
 			RunTaskWithExceptionHandling(() => InstallDlss5(mode.Value));
 		}
 		void OnRemoveDlss5ButtonClick(object sender, RoutedEventArgs e)
