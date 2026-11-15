@@ -1980,6 +1980,22 @@ In that event here are some steps you can try to resolve this:
 			return (rtx50, rtx2040);
 		}
 
+		static string GetDetectedGpuDescription()
+		{
+			var names = new List<string>();
+			try
+			{
+				using (var searcher = new ManagementObjectSearcher("SELECT Name FROM Win32_VideoController"))
+				foreach (ManagementObject item in searcher.Get())
+				{
+					string name = item["Name"] as string ?? string.Empty;
+					if (name.IndexOf("NVIDIA", StringComparison.OrdinalIgnoreCase) >= 0 && !names.Contains(name, StringComparer.OrdinalIgnoreCase)) names.Add(name);
+				}
+			}
+			catch { }
+			return names.Count == 0 ? "NVIDIA RTX не обнаружена" : string.Join(", ", names);
+		}
+
 		DlssGpuMode? SelectDlssGpuMode()
 		{
 			var families = DetectDlssGpuFamilies();
@@ -1990,7 +2006,8 @@ In that event here are some steps you can try to resolve this:
 			}
 			var dialog = new Window { Title = "Выбор профиля DLSS 5", Width = 430, Height = 215, ResizeMode = ResizeMode.NoResize, WindowStartupLocation = WindowStartupLocation.CenterOwner, Owner = this, Background = new SolidColorBrush(Color.FromRgb(31, 31, 31)), Foreground = Brushes.White };
 			var panel = new StackPanel { Margin = new Thickness(18) };
-			panel.Children.Add(new TextBlock { Text = "Выберите профиль под вашу видеокарту:", Margin = new Thickness(0, 0, 0, 14), FontSize = 15, Foreground = Brushes.White });
+			panel.Children.Add(new TextBlock { Text = "Выберите профиль под вашу видеокарту:", Margin = new Thickness(0, 0, 0, 4), FontSize = 15, Foreground = Brushes.White });
+			panel.Children.Add(new TextBlock { Text = "Обнаружено: " + GetDetectedGpuDescription(), Margin = new Thickness(0, 0, 0, 12), FontSize = 12, Foreground = Brushes.LightGray, TextWrapping = TextWrapping.Wrap });
 			DlssGpuMode? selected = null;
 			var button50 = new Button { Content = new TextBlock { Text = "RTX 50", Foreground = families.rtx50 ? Brushes.Black : Brushes.Gray, HorizontalAlignment = HorizontalAlignment.Center }, Height = 34, Margin = new Thickness(0, 0, 0, 8), Background = SystemColors.ControlBrush };
 			var button2040 = new Button { Content = new TextBlock { Text = "RTX 20 / 30 / 40", Foreground = families.rtx2040 ? Brushes.Black : Brushes.Gray, HorizontalAlignment = HorizontalAlignment.Center }, Height = 34, Background = SystemColors.ControlBrush };
