@@ -2022,13 +2022,14 @@ In that event here are some steps you can try to resolve this:
 			return selected;
 		}
 
-		static string DownloadDlss5Asset(string directory, string fileName, string expectedHash)
+		string DownloadDlss5Asset(string directory, string fileName, string expectedHash)
 		{
 			string path = Path.Combine(directory, fileName);
 			string url = "https://github.com/n7nsk/dlss5/releases/download/v0.1.0/" + Uri.EscapeDataString(fileName);
 			using (var client = new WebClient())
 			{
 				client.Headers[HttpRequestHeader.UserAgent] = "ReShade-DLSS5-Installer";
+				client.DownloadProgressChanged += (sender, args) => Dispatcher.Invoke(() => status.UpdateDownloadProgress(fileName, args.ProgressPercentage));
 				client.DownloadFile(url, path);
 			}
 			using (var sha = SHA256.Create())

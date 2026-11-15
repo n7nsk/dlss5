@@ -24,6 +24,7 @@ namespace ReShade.Setup.Pages
 				StatusSuccess.Visibility = Visibility.Collapsed;
 				StatusFailure.Visibility = Visibility.Collapsed;
 				PatreonButton.Visibility = Visibility.Collapsed;
+				DownloadProgress.Visibility = Visibility.Collapsed;
 			}
 			else
 			{
@@ -31,9 +32,17 @@ namespace ReShade.Setup.Pages
 				StatusSuccess.Visibility = status == true ? Visibility.Visible : Visibility.Collapsed;
 				StatusFailure.Visibility = status == true ? Visibility.Collapsed : Visibility.Visible;
 				PatreonButton.Visibility = status == true ? Visibility.Visible : Visibility.Collapsed;
+				DownloadProgress.Visibility = Visibility.Collapsed;
 			}
 
 			ProgressText.Text = message;
+		}
+
+		public void UpdateDownloadProgress(string fileName, int percentage)
+		{
+			DownloadProgress.Value = percentage;
+			DownloadProgress.Visibility = Visibility.Visible;
+			ProgressText.Text = "Downloading " + fileName + "... " + percentage + "%";
 		}
 
 		private void OnPatreonButtonClick(object sender, RoutedEventArgs e)

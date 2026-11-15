@@ -151,6 +151,7 @@
       <Path x:Name="StatusFailure" Width="100" Height="100" Visibility="Collapsed" Stroke="Red" StrokeThickness="10" StrokeEndLineCap="Round" StrokeStartLineCap="Round" Data="M 20,20 L 80,80 M 20,80 L 80,20" />
     </Grid>
     <TextBlock x:Name="ProgressText" Margin="10,5" TextAlignment="Center" TextWrapping="Wrap" />
+    <ProgressBar x:Name="DownloadProgress" Width="300" Height="8" Margin="10,4,10,0" Minimum="0" Maximum="100" Visibility="Collapsed" />
     <Button x:Uid="PatreonButton" x:Name="PatreonButton" Width="130" Height="25" Margin="0,20,0,0" Content="Become a patron" Style="{StaticResource PatreonButtonStyle}" Click="OnPatreonButtonClick" />
   </StackPanel>
 </Page>
