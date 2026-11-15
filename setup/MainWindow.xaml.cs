@@ -1992,8 +1992,8 @@ In that event here are some steps you can try to resolve this:
 			var panel = new StackPanel { Margin = new Thickness(18) };
 			panel.Children.Add(new TextBlock { Text = "Выберите профиль под вашу видеокарту:", Margin = new Thickness(0, 0, 0, 14), FontSize = 15, Foreground = Brushes.White });
 			DlssGpuMode? selected = null;
-			var button50 = new Button { Content = "RTX 50", Height = 34, Margin = new Thickness(0, 0, 0, 8), Foreground = families.rtx50 ? Brushes.Black : Brushes.Gray, Background = families.rtx50 ? Brushes.White : Brushes.LightGray };
-			var button2040 = new Button { Content = "RTX 20 / 30 / 40", Height = 34, Foreground = families.rtx2040 ? Brushes.Black : Brushes.Gray, Background = families.rtx2040 ? Brushes.White : Brushes.LightGray };
+			var button50 = new Button { Content = new TextBlock { Text = "RTX 50", Foreground = families.rtx50 ? Brushes.Black : Brushes.Gray, HorizontalAlignment = HorizontalAlignment.Center }, Height = 34, Margin = new Thickness(0, 0, 0, 8), Background = SystemColors.ControlBrush };
+			var button2040 = new Button { Content = new TextBlock { Text = "RTX 20 / 30 / 40", Foreground = families.rtx2040 ? Brushes.Black : Brushes.Gray, HorizontalAlignment = HorizontalAlignment.Center }, Height = 34, Background = SystemColors.ControlBrush };
 			button50.Click += (sender, args) => { if (families.rtx50) { selected = DlssGpuMode.Rtx50; dialog.DialogResult = true; } };
 			button2040.Click += (sender, args) => { if (families.rtx2040) { selected = DlssGpuMode.Rtx2040; dialog.DialogResult = true; } };
 			panel.Children.Add(button50); panel.Children.Add(button2040); dialog.Content = panel;
