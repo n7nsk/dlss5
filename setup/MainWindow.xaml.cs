@@ -1318,6 +1318,15 @@ In that event here are some steps you can try to resolve this:
 				config.SetValue("PROXY", "ProxyLibrary", "");
 			}
 
+			// Do not carry a potentially broken or full-screen docking layout into a new installation.
+			// ReShade will create its default movable layout on first launch. This deliberately leaves
+			// all presets, shader paths and other overlay preferences untouched.
+			if (currentOperation == InstallOperation.Install)
+			{
+				config.RemoveValue("OVERLAY", "Docking");
+				config.RemoveValue("OVERLAY", "Window");
+			}
+
 			config.SaveFile();
 
 			// Change file permissions for files ReShade needs write access to
