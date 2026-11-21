@@ -1855,9 +1855,9 @@ In that event here are some steps you can try to resolve this:
 			UpdateStatus("Installing DLSS 5 components...");
 			string downloadDirectory = Path.Combine(Path.GetTempPath(), "reshade-dlss5-" + Guid.NewGuid().ToString("N"));
 			Directory.CreateDirectory(downloadDirectory);
-			string streamlineArchive = DownloadDlss5Asset(downloadDirectory, "DLSS310.8.0-Streamline2.13.zip", "3FDB7CB25250259332550F419DBAC516A2EBA778D8592DA75CB2FE8ABFC781D8");
+			string streamlineArchive = DownloadDlss5Asset(downloadDirectory, "Streamline2.14.16.zip", "32041E51DB0CAB709A271B72A352281B690C2ABBD669A827809401A5DD23956B");
 			string neuralAsset = mode == DlssGpuMode.Rtx50
-				? DownloadDlss5Asset(downloadDirectory, "nvngx_dlssnr_2026_10_16.zip", "764F94A32EC302B9FE4DA9A1246FD7DD9176E490D8766667687C9FD89DA2AB12")
+				? DownloadDlss5Asset(downloadDirectory, "nvngx_dlssnr_310.9.16.zip", "5277355F0578D36F2A25413D8C7FF4C6F9966CEA5BAD714305F23B20173E09F6")
 				: DownloadDlss5Asset(downloadDirectory, "nvngx_dlssnr_compat-fp16-310.9.16-cuda13.4.3.dll", "CDFA6C1EC784867182164C7836F324F087B5C9F374D0C9FE46F54999FEABF3ED");
 			string renodxAddon = DownloadDlss5Asset(downloadDirectory, "renodx-dlss.addon64", "A8FD34B531FD22C3DBD008ED8FD3CBFCCA2FB451729E19CD1FC2E4C85B5068D4");
 			string backupDirectory = Path.Combine(targetDirectory, ".reshade-dlss5-backup", DateTime.Now.ToString("yyyyMMdd-HHmmss", CultureInfo.InvariantCulture));
